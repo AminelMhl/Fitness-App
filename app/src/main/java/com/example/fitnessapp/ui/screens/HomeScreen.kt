@@ -3,13 +3,10 @@ package com.example.fitnessapp.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Nightlight
-import androidx.compose.material.icons.filled.WbSunny
-import androidx.compose.material.icons.filled.WbTwilight
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -24,114 +21,130 @@ import com.example.fitnessapp.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
     val userState = viewModel.user.collectAsState().value
-    val bmr = viewModel.calculateBMR(userState.weight, userState.height, userState.age, userState.isMale)
-    val progress = viewModel.getProgress(userState.caloriesConsumed, bmr).coerceIn(0f, 1f)
+    val bmr = viewModel.calculateBMR(
+        userState.weight,
+        userState.height,
+        userState.age,
+        userState.isMale
+    )
+    val consumed = userState.caloriesConsumed
+    val progress = (consumed / bmr).coerceIn(0f, 1f)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Top Bar with Date & Edit Button
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Date Header
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFCB8400), RoundedCornerShape(12.dp))
+                .padding(vertical = 10.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(text = viewModel.getCurrentDate(), fontSize = 20.sp)
-            IconButton(onClick = { viewModel.editUserData() }) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit Data")
+            Text(text = viewModel.getCurrentDate(), color = Color.White, fontSize = 20.sp)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Calorie Budget Section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFD2D2D2), RoundedCornerShape(20.dp))
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                CalorieCircle(bmr = bmr, consumed = consumed)
+
+                Column(
+                    verticalArrangement = Arrangement.SpaceAround,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .background(Color(0xFFCB8400), RoundedCornerShape(20.dp))
+                        .padding(vertical = 8.dp, horizontal = 4.dp)
+                ) {
+                    MealIcon(Icons.Default.WbTwilight, "Breakfast") {
+                        navController.navigate("food")
+                    }
+                    MealIcon(Icons.Default.WbSunny, "Lunch") {
+                        navController.navigate("food")
+                    }
+                    MealIcon(Icons.Default.Nightlight, "Dinner") {
+                        navController.navigate("food")
+                    }
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Calorie Budget Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F1F1))
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Calorie Budget", fontSize = 18.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("BMR: ${bmr.toInt()} kcal")
-                    Text("Consumed: ${userState.caloriesConsumed.toInt()} kcal")
-                    Text("Remaining: ${(bmr - userState.caloriesConsumed).toInt()} kcal")
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Meal Summary Row (BF, L, D)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            ActionButton(
-                text = "Break Fast",
-                icon = Icons.Default.WbTwilight,
-                onClick = { navController.navigate("food") }
-            )
-            ActionButton(
-                text = "Lunch",
-                icon = Icons.Default.WbSunny,
-                onClick = { navController.navigate("food") }
-            )
-            ActionButton(
-                text = "Dinner",
-                icon = Icons.Default.Nightlight,
-                onClick = { navController.navigate("food") }
-            )
-        }
+        Text(
+            text = "Calory Budget",
+            fontSize = 20.sp,
+            color = Color(0xFFCB8400)
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Quick Access Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+        // Exercise Button
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .background(Color(0xFFCB8400), RoundedCornerShape(12.dp))
+                    .clickable { navController.navigate("exercise") }
+                    .padding(12.dp)
+            ) {
+                Icon(
+                    Icons.Default.FitnessCenter,
+                    contentDescription = "Exercise",
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+            Text("Exercise", fontSize = 16.sp, color = Color(0xFFCB8400))
+        }
+    }
+}
+
+@Composable
+fun CalorieCircle(bmr: Float, consumed: Float) {
+    val progress = (consumed / bmr).coerceIn(0f, 1f)
+
+    Box(
+        modifier = Modifier.size(180.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            progress = progress,
+            strokeWidth = 24.dp,
+            color = Color(0xFFCB8400),
+            modifier = Modifier.fillMaxSize()
+        )
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .background(Color.White, CircleShape),
+            contentAlignment = Alignment.Center
         ) {
-            ActionButton(
-                text = "Exercise",
-                icon = Icons.Default.FitnessCenter,
-                onClick = { navController.navigate("exercise") }
+            Text(
+                text = "${(bmr - consumed).toInt()}",
+                color = Color(0xFFCB8400),
+                fontSize = 22.sp
             )
         }
     }
 }
 
 @Composable
-fun MealBox(label: String) {
-    Box(
-        modifier = Modifier
-            .size(80.dp)
-            .background(Color(0xFFE0E0E0), RoundedCornerShape(10.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(label, fontSize = 16.sp)
-    }
-}
-
-@Composable
-fun ActionButton(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clickable { onClick() }
-    ) {
-        Icon(icon, contentDescription = text, modifier = Modifier.size(40.dp))
-        Text(text)
+fun MealIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, desc: String, onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(icon, contentDescription = desc, tint = Color.White, modifier = Modifier.size(32.dp))
     }
 }
