@@ -9,7 +9,7 @@ import java.util.*
 
 class HomeViewModel : ViewModel() {
 
-    private val _user = MutableStateFlow(User())
+    private val _user = MutableStateFlow(User(age = 25, weight = 70f, height = 175f, isMale = true, caloriesConsumed = 1000f, proteinGrams = 0f, carbsGrams = 0f, fatGrams = 0f))
     val user: StateFlow<User> = _user
 
     fun calculateBMR(weight: Float, height: Float, age: Int, isMale: Boolean): Float {
@@ -31,10 +31,5 @@ class HomeViewModel : ViewModel() {
     fun getCurrentDate(): String {
         val formatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
         return formatter.format(Date())
-    }
-
-    // Optional for Preview
-    fun setUserDummyData() {
-        _user.value = User(weight = 75f, height = 180f, age = 28, isMale = true, caloriesConsumed = 1500f)
     }
 }
