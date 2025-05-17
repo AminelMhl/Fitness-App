@@ -2,7 +2,6 @@ package com.example.fitnessapp.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -10,6 +9,7 @@ import com.example.fitnessapp.ui.screens.ExerciseDetailScreen
 import com.example.fitnessapp.ui.screens.HomeScreen
 import com.example.fitnessapp.ui.screens.ExercisesScreen
 import com.example.fitnessapp.ui.screens.FoodScreen
+import com.example.fitnessapp.ui.screens.CategoryDetailScreen // Make sure this import is added
 import com.example.fitnessapp.viewmodel.HomeViewModel
 
 @Composable
@@ -34,5 +34,10 @@ fun AppNavigation() {
         composable("food") {
             FoodScreen(navController)
         }
+        composable("category/{categoryName}") { backStackEntry ->
+            val categoryName = backStackEntry.arguments?.getString("categoryName") ?: ""
+            CategoryDetailScreen(categoryName, navController)
+        }
     }
 }
+

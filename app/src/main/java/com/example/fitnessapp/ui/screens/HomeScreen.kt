@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.text.font.FontWeight
 import com.example.fitnessapp.ui.components.AppScaffold
 
 data class MacroNutrient(val name: String, val value: Float, val color: Color)
@@ -43,9 +44,9 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
         val progress = (consumed / bmr).coerceIn(0f, 1f)
 
         val macros = listOf(
-            MacroNutrient("Protein", 80f, Color(0xFFff9800)),  // 80g
-            MacroNutrient("Carbs", 200f, Color(0xFF4caf50)),   // 200g
-            MacroNutrient("Fat", 70f, Color(0xFF2196f3))       // 70g
+            MacroNutrient("Protein", 80f, Color(0xFFFFEB3B)),  // 80g
+            MacroNutrient("Carbs", 200f, Color(0xFFF44336)),   // 200g
+            MacroNutrient("Fat", 70f, Color(0xFF009688))       // 70g
         )
 
         Column(
@@ -58,7 +59,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF2196F3), RoundedCornerShape(12.dp))
+                    .background(Color(0xFF00BCD4), RoundedCornerShape(12.dp))
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -106,7 +107,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
             Text(
                 text = "Calory Budget: ${bmr.toInt()}",
                 fontSize = 20.sp,
-                color = Color(0xFF2196F3)
+                fontWeight = FontWeight.Bold,
+                color=Color(0xFF1A237E)
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -115,7 +117,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     modifier = Modifier
-                        .background(Color(0xFF2196F3), RoundedCornerShape(12.dp))
+                        .background(Color(0xFF00BCD4), RoundedCornerShape(12.dp))
                         .clickable { navController.navigate("exercise") }
                         .padding(12.dp)
                 ) {
@@ -126,7 +128,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                         modifier = Modifier.size(40.dp)
                     )
                 }
-                Text("Exercise", fontSize = 16.sp, color = Color(0xFF2196F3))
+                Text("Exercise", fontSize = 18.sp, color = Color(0xFF1A237E))
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -135,7 +137,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
             Text(
                 text = "Macronutrient Breakdown",
                 fontSize = 20.sp,
-                color = Color(0xFF2196F3)
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A237E)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
