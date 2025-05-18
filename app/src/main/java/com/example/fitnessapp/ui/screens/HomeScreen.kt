@@ -17,13 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.fitnessapp.viewmodel.HomeViewModel
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.font.FontWeight
 import com.example.fitnessapp.ui.components.AppScaffold
@@ -32,21 +26,18 @@ data class MacroNutrient(val name: String, val value: Float, val color: Color)
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
-    AppScaffold{
+    viewModel.refreshNutritionData()
+
+    AppScaffold {
         val userState = viewModel.user.collectAsState().value
-        val bmr = viewModel.calculateBMR(
-            userState.weight,
-            userState.height,
-            userState.age,
-            userState.isMale
-        )
+        val caloriesBudget = userState.caloriesBudget
         val consumed = userState.caloriesConsumed
-        val progress = (consumed / bmr).coerceIn(0f, 1f)
+        val progress = (consumed / caloriesBudget).coerceIn(0f, 1f)
 
         val macros = listOf(
-            MacroNutrient("Protein", 80f, Color(0xFFFFEB3B)),  // 80g
-            MacroNutrient("Carbs", 200f, Color(0xFFF44336)),   // 200g
-            MacroNutrient("Fat", 70f, Color(0xFF009688))       // 70g
+            MacroNutrient("Protein", userState.proteinGrams, Color(0xFFFFEB3B)),
+            MacroNutrient("Carbs", userState.carbsGrams, Color(0xFFF44336)),
+            MacroNutrient("Fat", userState.fatGrams, Color(0xFF009688))
         )
 
         Column(
@@ -63,7 +54,24 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = viewModel.getCurrentDate(), color = Color.White, fontSize = 20.sp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(modifier = Modifier.width(24.dp)) // Balance the layout
+                    Text(text = viewModel.getCurrentDate(), color = Color.White, fontSize = 20.sp)
+                    IconButton(
+                        onClick = { navController.navigate("edituser") },
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Profile",
+                            tint = Color.White
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -80,23 +88,21 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    CalorieCircle(bmr = bmr, consumed = consumed)
+                    CalorieCircle(budget = caloriesBudget, consumed = consumed)
 
                     Column(
                         verticalArrangement = Arrangement.SpaceAround,
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .background(Color(0xFF2196F3), RoundedCornerShape(20.dp))
-                            .padding(vertical = 8.dp, horizontal = 4.dp)
+                        modifier = Modifier.height(180.dp)
                     ) {
                         MealIcon(Icons.Default.WbTwilight, "Breakfast") {
-                            navController.navigate("food")
+                            navController.navigate("meal/Breakfast")
                         }
                         MealIcon(Icons.Default.WbSunny, "Lunch") {
-                            navController.navigate("food")
+                            navController.navigate("meal/Lunch")
                         }
                         MealIcon(Icons.Default.Nightlight, "Dinner") {
-                            navController.navigate("food")
+                            navController.navigate("meal/Dinner")
                         }
                     }
                 }
@@ -104,11 +110,12 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Display calorie budget with goal
             Text(
-                text = "Calory Budget: ${bmr.toInt()}",
+                text = "Calorie Budget: ${caloriesBudget.toInt()} (${userState.goal})",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color=Color(0xFF1A237E)
+                color = Color(0xFF1A237E)
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -177,8 +184,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
 }
 
 @Composable
-fun CalorieCircle(bmr: Float, consumed: Float) {
-    val progress = (consumed / bmr).coerceIn(0f, 1f)
+fun CalorieCircle(budget: Float, consumed: Float) {
+    val progress = (consumed / budget).coerceIn(0f, 1f)
 
     Box(
         modifier = Modifier.size(180.dp),
@@ -197,7 +204,7 @@ fun CalorieCircle(bmr: Float, consumed: Float) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "${(bmr - consumed).toInt()}",
+                text = "${(budget - consumed).toInt()}",
                 color = Color(0xFF2196F3),
                 fontSize = 22.sp
             )

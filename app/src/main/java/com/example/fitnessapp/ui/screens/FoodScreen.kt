@@ -1,5 +1,6 @@
 package com.example.fitnessapp.ui.screens
 
+import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,19 +11,27 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.fitnessapp.R
+import com.example.fitnessapp.viewmodel.FoodViewModel
 
 data class FoodCategory(val name: String, val imageRes: Int)
 
@@ -73,7 +82,7 @@ fun CategoryCard(name: String, imageRes: Int, onClick: () -> Unit) {
         shape = RoundedCornerShape(12.dp),
 
 
-    ) {
+        ) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -98,6 +107,20 @@ fun CategoryCard(name: String, imageRes: Int, onClick: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryDetailScreen(categoryName: String, navController: NavController) {
+    val context = LocalContext.current
+    val foodViewModel: FoodViewModel = viewModel(
+        factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
+            context.applicationContext as Application
+        )
+    )
+
+    val currentMealType by foodViewModel.currentMealType.collectAsState()
+
+    // This will force the FoodViewModel to refresh its data when the screen is displayed
+    LaunchedEffect(Unit) {
+        foodViewModel.refreshFoodData()
+    }
+
     val foodItemsByCategory = mapOf(
         "Drinks" to listOf(
             FoodItem("Water", R.drawable.wat, 0, 0.0, 0.0, 0.0),
@@ -151,57 +174,98 @@ fun CategoryDetailScreen(categoryName: String, navController: NavController) {
             CenterAlignedTopAppBar(
                 title = { Text(text = categoryName, color = Color(0xFF2196F3), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF2196F3)
-                        )
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF2196F3)
+                            )
+                        }
                     }
-                }
             )
         }
     ) { innerPadding ->
-
-        LazyColumn(
+        Column(
             modifier = Modifier
-                .background(Color.White)
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
         ) {
-            items(foodItems.size) { index ->
-                val item = foodItems[index]
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+            // Meal type selector
+            MealTypeSelector(
+                currentMealType = currentMealType,
+                onMealTypeSelected = { foodViewModel.setCurrentMealType(it) }
+            )
+
+            Text(
+                text = "Adding to: $currentMealType",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2196F3)
+            )
+
+            LazyColumn(
+                modifier = Modifier
+                    .background(Color.White)
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                items(foodItems.size) { index ->
+                    val item = foodItems[index]
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = item.imageRes),
-                            contentDescription = item.name,
-                            modifier = Modifier
-                                .size(70.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text(
-                                text = item.name,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp,
-                                color = Color(0xFF003366)
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Image(
+                                painter = painterResource(id = item.imageRes),
+                                contentDescription = item.name,
+                                modifier = Modifier
+                                    .size(70.dp)
+                                    .clip(RoundedCornerShape(8.dp))
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = "Calories: ${item.calories} kcal", color = Color.Red, fontSize = 16.sp)
-                            Text(text = "Protein: ${item.protein} g", color = Color(0xFF228B22), fontSize = 16.sp)
-                            Text(text = "Carbs: ${item.carbs} g", color = Color(0xFF9C27B0), fontSize = 16.sp)
-                            Text(text = "Fat: ${item.fat} g", color =  Color(0xFF00BCD4), fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = item.name,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = Color(0xFF003366)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = "Calories: ${item.calories} kcal", color = Color.Red, fontSize = 16.sp)
+                                Text(text = "Protein: ${item.protein} g", color = Color(0xFF228B22), fontSize = 16.sp)
+                                Text(text = "Carbs: ${item.carbs} g", color = Color(0xFF9C27B0), fontSize = 16.sp)
+                                Text(text = "Fat: ${item.fat} g", color =  Color(0xFF00BCD4), fontSize = 16.sp)
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    foodViewModel.addFood(item, 1, currentMealType)
+                                    foodViewModel.refreshFoodData()
+                                    navController.navigate("meal/$currentMealType") {
+                                        // This is the key fix - it replaces the current screen in the back stack
+                                        popUpTo("meal/$currentMealType") {
+                                            inclusive = true
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = "Add to meal",
+                                    tint = Color(0xFF2196F3)
+                                )
+                            }
                         }
                     }
                 }
@@ -210,4 +274,49 @@ fun CategoryDetailScreen(categoryName: String, navController: NavController) {
     }
 }
 
+@Composable
+fun MealTypeSelector(
+    currentMealType: String,
+    onMealTypeSelected: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        MealTypeButton(
+            text = "Breakfast",
+            selected = currentMealType == "Breakfast",
+            onClick = { onMealTypeSelected("Breakfast") }
+        )
+        MealTypeButton(
+            text = "Lunch",
+            selected = currentMealType == "Lunch",
+            onClick = { onMealTypeSelected("Lunch") }
+        )
+        MealTypeButton(
+            text = "Dinner",
+            selected = currentMealType == "Dinner",
+            onClick = { onMealTypeSelected("Dinner") }
+        )
+    }
+}
+
+@Composable
+fun MealTypeButton(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primary else Color.LightGray
+        ),
+        modifier = Modifier.padding(4.dp)
+    ) {
+        Text(text)
+    }
+}
 
