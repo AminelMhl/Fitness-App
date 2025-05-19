@@ -1,5 +1,6 @@
 package com.example.fitnessapp.ui.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,6 +25,7 @@ import com.example.fitnessapp.ui.components.AppScaffold
 
 data class MacroNutrient(val name: String, val value: Float, val color: Color)
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
     viewModel.refreshNutritionData()
@@ -43,10 +45,10 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Date Header
+            // Date Header - responsive width
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -59,8 +61,12 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Spacer(modifier = Modifier.width(24.dp)) // Balance the layout
-                    Text(text = viewModel.getCurrentDate(), color = Color.White, fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(24.dp))
+                    Text(
+                        text = viewModel.getCurrentDate(),
+                        color = Color.White,
+                        fontSize = MaterialTheme.typography.titleLarge.fontSize
+                    )
                     IconButton(
                         onClick = { navController.navigate("edituser") },
                         modifier = Modifier.padding(end = 8.dp)
@@ -74,53 +80,62 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Calorie Budget Section
+            // Calorie Budget Section - responsive sizing
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFFB6B6B6), RoundedCornerShape(20.dp))
                     .padding(16.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    CalorieCircle(budget = caloriesBudget, consumed = consumed)
+                BoxWithConstraints {
+                    val circleSize = if (maxWidth > 600.dp) 200.dp else
+                        if (maxWidth > 400.dp) 160.dp else 120.dp
 
-                    Column(
-                        verticalArrangement = Arrangement.SpaceAround,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.height(180.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        MealIcon(Icons.Default.WbTwilight, "Breakfast") {
-                            navController.navigate("meal/Breakfast")
-                        }
-                        MealIcon(Icons.Default.WbSunny, "Lunch") {
-                            navController.navigate("meal/Lunch")
-                        }
-                        MealIcon(Icons.Default.Nightlight, "Dinner") {
-                            navController.navigate("meal/Dinner")
+                        CalorieCircle(
+                            budget = caloriesBudget,
+                            consumed = consumed,
+                            modifier = Modifier.size(circleSize)
+                        )
+
+                        Column(
+                            verticalArrangement = Arrangement.SpaceEvenly,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.height(circleSize)
+                        ) {
+                            MealIcon(Icons.Default.WbTwilight, "Breakfast") {
+                                navController.navigate("meal/Breakfast")
+                            }
+                            MealIcon(Icons.Default.WbSunny, "Lunch") {
+                                navController.navigate("meal/Lunch")
+                            }
+                            MealIcon(Icons.Default.Nightlight, "Dinner") {
+                                navController.navigate("meal/Dinner")
+                            }
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Display calorie budget with goal
+            // Display calorie budget with goal - responsive text
             Text(
                 text = "Calorie Budget: ${caloriesBudget.toInt()} (${userState.goal})",
-                fontSize = 20.sp,
+                fontSize = MaterialTheme.typography.titleMedium.fontSize,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1A237E)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.weight(0.5f))
 
-            // Exercise Button
+            // Exercise Button - responsive width
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     modifier = Modifier
@@ -132,37 +147,47 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                         Icons.Default.FitnessCenter,
                         contentDescription = "Exercise",
                         tint = Color.White,
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(36.dp)
                     )
                 }
-                Text("Exercise", fontSize = 18.sp, color = Color(0xFF1A237E))
+                Text(
+                    "Exercise",
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                    color = Color(0xFF1A237E)
+                )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.weight(0.5f))
 
-            // Macro Breakdown
+            // Macro Breakdown - responsive text
             Text(
                 text = "Macronutrient Breakdown",
-                fontSize = 20.sp,
+                fontSize = MaterialTheme.typography.titleMedium.fontSize,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1A237E)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Box(
-                modifier = Modifier
-                    .size(180.dp)
-                    .background(Color.White, shape = CircleShape)
-                    .padding(8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                MacroPieChart(macros = macros, modifier = Modifier.fillMaxSize())
+            // Responsive chart size based on screen width
+            BoxWithConstraints {
+                val chartSize = if (maxWidth > 600.dp) 220.dp else
+                    if (maxWidth > 400.dp) 180.dp else 140.dp
+
+                Box(
+                    modifier = Modifier
+                        .size(chartSize)
+                        .background(Color.White, shape = CircleShape)
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    MacroPieChart(macros = macros, modifier = Modifier.fillMaxSize())
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Legend
+            // Legend - responsive row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -175,43 +200,48 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
                                 .background(it.color, CircleShape)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(it.name, fontSize = 14.sp)
+                        Text(
+                            it.name,
+                            fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                        )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun CalorieCircle(budget: Float, consumed: Float) {
+fun CalorieCircle(budget: Float, consumed: Float, modifier: Modifier = Modifier) {
     val progress = (consumed / budget).coerceIn(0f, 1f)
 
     Box(
-        modifier = Modifier.size(180.dp),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(
             progress = progress,
-            strokeWidth = 24.dp,
+            strokeWidth = 20.dp,
             color = Color(0xFF2196F3),
             modifier = Modifier.fillMaxSize()
         )
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
-                .size(100.dp)
+                .fillMaxSize(0.6f)
                 .background(Color.White, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "${(budget - consumed).toInt()}",
                 color = Color(0xFF2196F3),
-                fontSize = 22.sp
+                fontSize = if (maxWidth > 100.dp) 22.sp else 16.sp
             )
         }
     }
 }
-
 @Composable
 fun MealIcon(icon: ImageVector, desc: String, onClick: () -> Unit) {
     IconButton(onClick = onClick) {
