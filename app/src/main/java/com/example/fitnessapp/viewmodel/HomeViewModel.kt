@@ -228,11 +228,37 @@ class FoodViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val LAST_DATE_KEY = "last_date"
+
     fun refreshFoodData() {
+        checkAndResetDailyData()
         // Reload selected foods from storage
         _selectedFoods.value = loadSelectedFoods()
         // Update nutrition totals based on current data
         updateNutritionTotals()
+    }
+
+    private fun checkAndResetDailyData() {
+        // Get current date in yyyy-MM-dd format (just the date part)
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val currentDateStr = dateFormat.format(Date())
+
+        // Get last saved date
+        val lastDateStr = sharedPreferences.getString(LAST_DATE_KEY, "")
+
+        // If date is different, clear all foods
+        if (lastDateStr != currentDateStr) {
+            // Clear all foods for the new day
+            _selectedFoods.value = emptyList()
+            saveSelectedFoods()
+
+            // Reset nutrition totals
+            val homeViewModel = HomeViewModel.getInstance(getApplication())
+            homeViewModel.updateNutritionData(0f, 0f, 0f, 0f)
+
+            // Save new date
+            sharedPreferences.edit().putString(LAST_DATE_KEY, currentDateStr).apply()
+        }
     }
 
     private fun updateNutritionTotals() {
